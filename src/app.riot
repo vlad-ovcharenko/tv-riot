@@ -1,0 +1,182 @@
+<my-component>
+  <button
+      if={!state.isFavoritesOpened}
+      class="btn"
+      onclick={() => update({isFavoritesOpened: true} )}
+  >
+    show { state.favorites.length } favorites
+  </button>
+  <button
+      if={state.isFavoritesOpened}
+      class="btn"
+      onclick={() => update({isFavoritesOpened: false} )}
+  >
+    Close Favorites
+  </button>
+  <div class="movies" style={ state.isFavoritesOpened  ? 'display: grid;' : 'display: none;' }>
+    <a
+        each={movie in state.favorites}
+        class="movie" each={movie in page}
+        href=`https://www.imdb.com/title/${props.movie.imdbID}`
+        target="_blank"
+    >
+      <p class="movie__title">{movie.Title}</p>
+      <p class="movie__subtitle">{movie.Year}</p>
+      <button
+          if={!state.favorites.includes(movie)}
+          onclick={(ev) => addFavorite(ev, movie)}
+          class="btn btn--white"
+          style="width: 100%">
+        add to favorite
+      </button>
+      <button
+          if={state.favorites.includes(movie)}
+          onclick={(ev) => removeFavorite(ev, movie)}
+          class="btn btn--white"
+          style="width: 100%">
+        Remove from Favorite
+      </button>
+    </a>
+  </div>
+  <div style={ !state.isFavoritesOpened  ? 'display: block;' : 'display: none;' }>
+    <div class="movies">
+      <template each={(page, pIndex) in state.pages}>
+        <a
+            style={ pIndex === state.currentPage - 1  ? 'display: flex;' : 'display: none;' }
+            class="movie" each={movie in page}
+            href=`https://www.imdb.com/title/${props.movie.imdbID}`
+            target="_blank">
+          <p class="movie__title">{movie.Title}</p>
+          <p class="movie__subtitle">{movie.Year}</p>
+          <button
+              if={!state.favorites.includes(movie)}
+              onclick={(ev) => addFavorite(ev, movie)}
+              class="btn btn--white"
+              style="width: 100%">add to favorite
+          </button>
+          <button
+              if={state.favorites.includes(movie)}
+              onclick={(ev) => removeFavorite(ev, movie)}
+              class="btn btn--white"
+              style="width: 100%">Remove from Favorite
+          </button>
+        </a>
+      </template>
+    </div>
+
+    <div class="search-page">
+      <div class="input-container">
+        <input
+            class="material-input"
+            type="text"
+            oninput={onSearchPage}
+            required
+        >
+        <label class="material-label">
+          Enter a number from 1 to {state.pages.length} to find a page
+        </label>
+        <div class="material-underline"></div>
+      </div>
+      <button class="btn" onclick={findPage}>Find page</button>
+    </div>
+
+    <div class="navigation">
+      <button
+          class="btn navigation__btn"
+          disabled={state.currentPage < 2}
+          onclick={() => togglePage(state.currentPage - 1)}
+      >
+        back
+      </button>
+      <span
+          class="navigation__page"
+          style="padding: 5px 10px;
+          border: solid #3f51b5 1px;
+          border-radius: 5px">
+      {state.currentPage}
+      </span>
+      <button
+          class="btn navigation__btn"
+          disabled={state.currentPage === state.pages.length}
+          onclick={() => togglePage(state.currentPage + 1)}>
+        next
+      </button>
+    </div>
+  </div>
+
+
+  <script>
+      export default {
+          state: {
+              pages: [],
+              isError: false,
+              currentPage: 1,
+              pageSearchText: '',
+              favorites: [],
+              isFavoritesOpened: false,
+              movieSearchText: '',
+              isActiveMovieSearch: false,
+              pagesSearched: [],
+              isSearchLoading: false,
+              currentSearchedPage: 1,
+              timeout: null
+          },
+          onBeforeMount() {
+              this.getPage()
+          },
+          togglePage(pageNumber) {
+              console.log(1)
+              this.getPage(pageNumber);
+              this.state.currentPage = pageNumber;
+              this.update(this.state)
+          },
+          async getPage(pageNumber = 1) {
+              if (this.state.pages[pageNumber - 1]) return;
+              try {
+                  const response = await fetch(
+                      `https://jsonmock.hackerrank.com/api/movies/search/?page=${pageNumber}`
+                  );
+                  const {page, data, total_pages} = await response.json();
+                  // Updating the page count with each fetch to handle potential discrepancies
+                  // if the total number of pages changes.
+                  this.state.pages.length = total_pages;
+                  this.state.pages[page - 1] = data;
+                  this.update(this.state)
+                  console.log();
+              } catch (e) {
+                  this.state.isError = true;
+                  this.update(this.state)
+                  console.log(e);
+              }
+              console.log(this.state.pages)
+          },
+          onSearchPage(ev) {
+              this.state.pageSearchText = ev.target.value
+              console.log(this.state.pageSearchText)
+          },
+          findPage() {
+              console.log(1)
+              const num = Number(this.state.pageSearchText);
+              if (num > 0 && num < this.state.pages.length) {
+                  this.state.currentPage = num;
+                  this.getPage(num);
+                  this.state.pageSearchText = '';
+              }
+              this.update(this.state)
+          },
+          addFavorite(ev, movie) {
+              ev.preventDefault()
+              const res = this.state.favorites.includes(movie);
+              if (!res) this.state.favorites.push(movie);
+              this.update(this.state)
+              console.log(res);
+          },
+          removeFavorite(ev, movie) {
+              ev.preventDefault()
+              const index = this.state.favorites.findIndex((el) => el === movie);
+              this.state.favorites.splice(index, 1);
+              this.update(this.state)
+          },
+      }
+  </script>
+</my-component>
