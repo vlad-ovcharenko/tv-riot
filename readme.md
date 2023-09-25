@@ -1,21 +1,3 @@
-# slim-tv-riot
+**This project is a streamlined variant of [slim-tv on GitHub](https://github.com/vlad-ovcharenko/slim-tv) using [`riot.js`](https://riot.js.org/).**
 
-
-
-## Start
-
-```
-npm start
-```
-
-## Test
-
-```
-npm test
-```
-
-## Build
-
-```
-npm run build
-```
+[View the site](https://riot-tv.surge.sh/)
